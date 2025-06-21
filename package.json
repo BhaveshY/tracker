@@ -1,0 +1,29 @@
+{
+  "name": "ml-ai-roadmap-tracker",
+  "version": "1.0.0",
+  "description": "A comprehensive dashboard to track 6-month ML/AI project roadmap progress",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npx nodemon server/index.js",
+    "client": "cd client && npx craco start",
+    "build": "cd client && npx craco build",
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "start": "npx kill-port 5001 && node server/index.js"
+  },
+  "keywords": [
+    "ml",
+    "ai",
+    "tracking",
+    "dashboard",
+    "portfolio",
+    "projects"
+  ],
+  "author": "ML Student",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "kill-port": "^2.0.1",
+    "nodemon": "^3.1.10"
+  }
+}
