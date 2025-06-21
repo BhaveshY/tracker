@@ -50,7 +50,7 @@ function Sidebar({ isOpen, onClose }) {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="font-bold text-xl text-foreground">ML Tracker</h1>
+              <h1 className="font-bold text-xl text-foreground">Trackify</h1>
             </div>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={onClose}>
               <X size={22} />

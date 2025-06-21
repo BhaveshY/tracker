@@ -1,7 +1,7 @@
 {
-  "name": "ml-tracker-server",
+  "name": "trackify-server",
   "version": "1.0.0",
-  "description": "Backend API for ML/AI roadmap tracker",
+  "description": "Backend API for Trackify",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

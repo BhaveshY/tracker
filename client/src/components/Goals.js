@@ -57,6 +57,7 @@ const goalIcons = {
 function Goals() {
   const [goals, setGoals] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [milestones, setMilestones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('goals');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -65,9 +66,10 @@ function Goals() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [goalsResponse, projectsResponse] = await Promise.all([
+      const [goalsResponse, projectsResponse, milestonesResponse] = await Promise.all([
         axios.get('/api/goals'),
-        axios.get('/api/projects')
+        axios.get('/api/projects'),
+        axios.get('/api/milestones')
       ]);
       
       const portfolioProjects = projectsResponse.data.filter(p => p.github_url).length;
@@ -81,6 +83,7 @@ function Goals() {
 
       setGoals(updatedGoals);
       setProjects(projectsResponse.data);
+      setMilestones(milestonesResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to fetch data.');
@@ -140,8 +143,6 @@ function Goals() {
     return <GoalsSkeleton />;
   }
   
-  const milestones = getMilestones(projects);
-
   return (
     <div>
       <div className="flex items-center justify-between">

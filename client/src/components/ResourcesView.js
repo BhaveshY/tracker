@@ -3,11 +3,13 @@ import axios from 'axios';
 import { 
   ExternalLink, 
   Edit,
+  Plus,
+  Trash2,
   CheckCircle,
   Clock,
   AlertCircle,
-  BookOpen,
-  Search
+  Search,
+  MoreVertical
 } from 'lucide-react';
 import { Button } from "./ui/button";
 import {
@@ -25,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
@@ -36,6 +39,7 @@ function ResourcesView() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingResource, setEditingResource] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchResources = useCallback(async () => {
@@ -62,15 +66,38 @@ function ResourcesView() {
   }, [searchQuery, fetchResources]);
 
   const handleSave = async (formData) => {
-    const toastId = toast.loading('Updating resource...');
+    const isEditing = !!editingResource;
+    const toastId = toast.loading(isEditing ? 'Updating resource...' : 'Creating resource...');
     try {
-      await axios.put(`/api/learning-resources/${editingResource.id}`, formData);
+      if (isEditing) {
+        await axios.put(`/api/learning-resources/${editingResource.id}`, formData);
+      } else {
+        await axios.post('/api/learning-resources', formData);
+      }
+      setDialogOpen(false);
       setEditingResource(null);
       fetchResources();
-      toast.success('Resource updated!', { id: toastId });
+      toast.success(isEditing ? 'Resource updated!' : 'Resource created!', { id: toastId });
     } catch (error) {
-      toast.error('Error updating resource.', { id: toastId });
+      toast.error(isEditing ? 'Failed to save resource.' : 'Failed to save resource.', { id: toastId });
     }
+  };
+
+  const handleDelete = async (resourceId) => {
+    if (!window.confirm('Are you sure you want to delete this resource?')) return;
+    const toastId = toast.loading('Deleting resource...');
+    try {
+      await axios.delete(`/api/learning-resources/${resourceId}`);
+      fetchResources();
+      toast.success('Resource deleted!', { id: toastId });
+    } catch (error) {
+      toast.error('Failed to delete resource.', { id: toastId });
+    }
+  };
+  
+  const openDialog = (resource = null) => {
+    setEditingResource(resource);
+    setDialogOpen(true);
   };
 
   const getStatusIcon = (status) => {
@@ -115,16 +142,29 @@ function ResourcesView() {
 
       <div className="flex items-center gap-3">
         {getStatusBadge(resource.status)}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setEditingResource(resource)}>
-            <Edit size={16} />
-          </Button>
-          <Button variant="ghost" size="icon" asChild>
-            <a href={resource.url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink size={16} />
-            </a>
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => openDialog(resource)}>
+              <Edit size={14} className="mr-2" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDelete(resource.id)} className="text-red-500">
+              <Trash2 size={14} className="mr-2" />
+              Delete
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={14} className="mr-2" />
+                Open Link
+              </a>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -142,14 +182,20 @@ function ResourcesView() {
         </p>
       </div>
 
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input 
-          placeholder="Search resources by title, notes, or type..." 
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="flex justify-between items-center mb-6">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Search resources..." 
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Button onClick={() => openDialog()}>
+          <Plus size={16} className="mr-2"/>
+          New Resource
+        </Button>
       </div>
 
       <div className="space-y-8">
@@ -179,64 +225,118 @@ function ResourcesView() {
         )}
       </div>
 
-      {editingResource && (
-        <EditResourceDialog 
-          resource={editingResource}
-          setResource={setEditingResource}
-          onSave={handleSave}
-        />
-      )}
+      <ResourceForm 
+        key={editingResource ? editingResource.id : 'new'}
+        isOpen={dialogOpen}
+        setIsOpen={setDialogOpen}
+        resource={editingResource}
+        onSave={handleSave}
+      />
     </div>
   );
 }
 
-const EditResourceDialog = ({ resource, setResource, onSave }) => {
+const ResourceForm = ({ isOpen, setIsOpen, resource, onSave }) => {
   const [formData, setFormData] = useState({
-    status: resource.status,
-    notes: resource.notes || ''
+    title: '',
+    url: '',
+    type: 'tutorial',
+    notes: '',
+    month_id: '1',
+    status: 'not_started'
   });
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (resource) {
+      setFormData({
+        title: resource.title || '',
+        url: resource.url || '',
+        type: resource.type || 'tutorial',
+        notes: resource.notes || '',
+        month_id: String(resource.month_id || '1'),
+        status: resource.status || 'not_started'
+      });
+    } else {
+      // Reset for new resource form
+      setFormData({
+        title: '', url: '', type: 'tutorial', notes: '', month_id: '1', status: 'not_started'
+      });
+    }
+  }, [resource]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
     onSave(formData);
-  }
+  };
+
+  const isEditing = !!resource;
 
   return (
-    <Dialog open={!!resource} onOpenChange={(isOpen) => !isOpen && setResource(null)}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Resource</DialogTitle>
-          <DialogDescription>Update the status and notes for "{resource.title}"</DialogDescription>
+          <DialogTitle>{isEditing ? 'Edit Resource' : 'Create New Resource'}</DialogTitle>
+          <DialogDescription>
+            {isEditing ? `Update details for "${resource.title}"` : 'Add a new learning resource to your tracker.'}
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <form id="resource-form" onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="url">URL</Label>
+            <Input id="url" value={formData.url} onChange={e => setFormData({...formData, url: e.target.value})} required />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+              <Label>Type</Label>
+              <Select value={formData.type} onValueChange={value => setFormData({...formData, type: value})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="not_started">Not Started</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="tutorial">Tutorial</SelectItem>
+                  <SelectItem value="documentation">Documentation</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="article">Article</SelectItem>
+                  <SelectItem value="course">Course</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Your notes about this resource..."
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              />
+              <Label>Month</Label>
+              <Select value={formData.month_id} onValueChange={value => setFormData({...formData, month_id: value})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[...Array(6)].map((_, i) => <SelectItem key={i+1} value={String(i+1)}>Month {i+1}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={formData.status} onValueChange={value => setFormData({...formData, status: value})}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="not_started">Not Started</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea id="notes" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} />
+          </div>
+        </form>
         <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => setResource(null)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="resource-form">{isEditing ? 'Save Changes' : 'Create Resource'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
 const ResourcesSkeleton = () => (
     <div>

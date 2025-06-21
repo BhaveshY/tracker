@@ -383,6 +383,52 @@ app.get('/api/projects/search', (req, res) => {
   );
 });
 
+// Quick-add a new project with smart defaults
+app.post('/api/projects/quick-add', (req, res) => {
+  const { title } = req.body;
+  if (!title) {
+    return res.status(400).json({ error: 'Project title is required' });
+  }
+
+  const id = uuidv4();
+  let type = 'uncategorized';
+  const description = 'Added via quick-add.';
+
+  // Simple keyword-based type inference
+  const titleLower = title.toLowerCase();
+  if (titleLower.includes('classif')) type = 'classification';
+  else if (titleLower.includes('regress') || titleLower.includes('predict')) type = 'regression';
+  else if (titleLower.includes('vision') || titleLower.includes('image') || titleLower.includes('cnn')) type = 'computer_vision';
+  else if (titleLower.includes('nlp') || titleLower.includes('text') || titleLower.includes('bert')) type = 'nlp';
+  else if (titleLower.includes('recommend')) type = 'recommender';
+  else if (titleLower.includes('portfolio') || titleLower.includes('deploy')) type = 'portfolio';
+  else if (titleLower.includes('integra')) type = 'integration';
+  
+  // Find the lowest month_id or default to 1
+  db.get('SELECT MIN(month_number) as min_month FROM months', (err, row) => {
+    const month_id = row?.min_month || 1;
+
+    db.run(
+      'INSERT INTO projects (id, month_id, title, description, type) VALUES (?, ?, ?, ?, ?)',
+      [id, month_id, title, description, type],
+      function(err) {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        db.get('SELECT * FROM projects WHERE id = ?', id, (err, projectRow) => {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          res.status(201).json(projectRow);
+        });
+      }
+    );
+  });
+});
+
+
 // Create a new project
 app.post('/api/projects', (req, res) => {
   const { month_id, title, description, type, tech_stack } = req.body;
@@ -410,13 +456,13 @@ app.post('/api/projects', (req, res) => {
 // Update project
 app.put('/api/projects/:id', (req, res) => {
   const { id } = req.params;
-  const { status, github_url, deployment_url, documentation_status, progress_percentage } = req.body;
+  const { title, description, month_id, type, tech_stack, status, github_url, deployment_url, documentation_status, progress_percentage } = req.body;
   
   db.run(`
     UPDATE projects 
-    SET status = ?, github_url = ?, deployment_url = ?, documentation_status = ?, progress_percentage = ?
+    SET title = ?, description = ?, month_id = ?, type = ?, tech_stack = ?, status = ?, github_url = ?, deployment_url = ?, documentation_status = ?, progress_percentage = ?
     WHERE id = ?
-  `, [status, github_url, deployment_url, documentation_status, progress_percentage, id], function(err) {
+  `, [title, description, month_id, type, tech_stack, status, github_url, deployment_url, documentation_status, progress_percentage, id], function(err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -424,6 +470,37 @@ app.put('/api/projects/:id', (req, res) => {
     res.json({ message: 'Project updated successfully' });
   });
 });
+
+// --- MILESTONES API ---
+
+// Get dynamic milestones based on project completion
+app.get('/api/milestones', (req, res) => {
+  db.all(`
+    SELECT 
+      m.month_number,
+      m.title,
+      m.description,
+      COUNT(p.id) as total_projects,
+      COUNT(CASE WHEN p.status = 'completed' THEN 1 END) as completed_projects
+    FROM months m
+    JOIN projects p ON m.month_number = p.month_id
+    GROUP BY m.id
+    ORDER BY m.month_number
+  `, (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    const milestones = rows.map(row => ({
+      month: row.month_number,
+      title: row.title || `Month ${row.month_number} Completion`,
+      description: row.description || `Finish all projects for Month ${row.month_number}`,
+      completed: row.total_projects > 0 && row.total_projects === row.completed_projects
+    }));
+    res.json(milestones);
+  });
+});
+
 
 // --- GOALS API ---
 
@@ -617,6 +694,8 @@ app.put('/api/learning-resources/:id', (req, res) => {
     });
 });
 
+// --- LEARNING RESOURCES API ---
+
 // Get learning resources
 app.get('/api/learning-resources', (req, res) => {
   db.all('SELECT * FROM learning_resources ORDER BY month_id, title', (err, rows) => {
@@ -625,6 +704,42 @@ app.get('/api/learning-resources', (req, res) => {
       return;
     }
     res.json(rows);
+  });
+});
+
+// Create a new learning resource
+app.post('/api/learning-resources', (req, res) => {
+  const { month_id, title, url, type, notes } = req.body;
+  const id = uuidv4();
+
+  db.run(
+    'INSERT INTO learning_resources (id, month_id, title, url, type, notes) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, month_id, title, url, type, notes],
+    function (err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      db.get('SELECT * FROM learning_resources WHERE id = ?', id, (err, row) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.status(201).json(row);
+      });
+    }
+  );
+});
+
+// Delete a learning resource
+app.delete('/api/learning-resources/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM learning_resources WHERE id = ?', id, function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.status(204).send();
   });
 });
 
@@ -650,5 +765,5 @@ app.get('/api/resources/search', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 ML/AI Roadmap Tracker server running on port ${PORT}`);
+  console.log(`🚀 Trackify server running on port ${PORT}`);
 }); 

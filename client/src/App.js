@@ -50,7 +50,7 @@ function App() {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col overflow-hidden lg:pl-72">
         <header className="lg:hidden flex items-center justify-between p-4 border-b">
-          <h1 className="font-bold text-xl text-foreground">ML Tracker</h1>
+          <h1 className="font-bold text-xl text-foreground">Trackify</h1>
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu />
           </Button>

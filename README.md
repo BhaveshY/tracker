@@ -1,16 +1,18 @@
-# ML/AI Roadmap Tracker 🎯
+# Trackify 🎯
 
-A comprehensive web dashboard to track your 6-month ML/AI project roadmap designed for Werkstudent positions in Germany.
+A comprehensive web dashboard to track your projects, goals, and learning journey.
 
 ## Features ✨
 
-- **📊 Dashboard Overview**: View overall progress, statistics, and quick actions
-- **📅 Monthly Tracking**: Detailed views for each month's projects and goals
-- **🎯 Project Management**: Track progress, add GitHub/deployment URLs, manage documentation status
-- **⏰ Time Tracking**: Log daily work hours to maintain 2-3 hour daily goals
-- **📚 Learning Resources**: Manage tutorials, documentation, and learning materials
-- **📈 Progress Analytics**: Visual progress bars and statistics
-- **💻 Responsive Design**: Works on desktop, tablet, and mobile devices
+- **🚀 Smart Add**: Add projects, goals, and tasks using natural language.
+- **⚡ Quick Add**: Instantly add new projects with just a title.
+- **📊 Dashboard Overview**: View overall progress, statistics, and quick actions.
+- **📅 Monthly Tracking**: Detailed views for each month's projects and goals.
+- **🎯 Project Management**: Track progress, add GitHub/deployment URLs, manage documentation status.
+- **⏰ Time Tracking**: Log daily work hours to maintain your goals.
+- **📚 Learning Resources**: Manage tutorials, documentation, and learning materials.
+- **📈 Progress Analytics**: Visual progress bars and statistics.
+- **💻 Responsive Design**: Works on desktop, tablet, and mobile devices.
 
 ## Technology Stack 🛠️
 
@@ -112,6 +114,8 @@ Each month includes:
 ## API Endpoints 🔌
 
 ### Main Endpoints
+- `POST /api/smart-add` - Add projects, tasks, and goals from a single text block.
+- `POST /api/projects/quick-add` - Quickly create a project with just a title.
 - `GET /api/dashboard/stats` - Overall statistics
 - `GET /api/months` - All months with progress
 - `GET /api/months/:id` - Specific month details
@@ -131,9 +135,9 @@ The SQLite database includes tables for:
 
 ## Contributing 🤝
 
-This is a personal project tracker, but you can customize it for your own roadmap:
+This is a personal project tracker, but you can customize it for your own needs:
 
-1. Modify the roadmap data in `server/index.js`
+1. Modify the smart-add parser in `server/index.js`
 2. Update project types and categories
 3. Add custom fields for your specific needs
 4. Customize the UI colors and themes in `client/src/index.css`
@@ -176,6 +180,6 @@ MIT License - Feel free to adapt for your own learning journey!
 
 ---
 
-**Ready to start your ML/AI journey?** 🚀
+**Ready to start tracking?** 🚀
 
-Launch the application and begin tracking your path to landing that Werkstudent position! 
+Launch the application and begin organizing your projects and goals! 

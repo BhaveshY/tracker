@@ -61,6 +61,18 @@ function Dashboard() {
     }
   };
 
+  const handleSmartAddKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const template = `Project: \nDescription: \nMonth: 1\nType: \nTech Stack: \n\nTask: \nPriority: medium\n\nGoal: \nType: learning\nTarget Date: `;
+      
+      setSmartAddText(prev => {
+        const newText = prev ? `${prev}\n\n${template}` : template;
+        return newText;
+      });
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'completed': return <Badge variant="success">Completed</Badge>;
@@ -82,7 +94,7 @@ function Dashboard() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-1">
-            ML/AI Roadmap Dashboard
+            Welcome to Trackify
           </h1>
           <p className="text-muted-foreground">
             Your personal journey to becoming a job-ready ML Engineer.
@@ -115,8 +127,12 @@ Target Date: 2024-09-01`
             }
             value={smartAddText}
             onChange={(e) => setSmartAddText(e.target.value)}
+            onKeyDown={handleSmartAddKeyDown}
             className="min-h-[150px] mb-4 font-mono text-sm"
           />
+          <p className="text-xs text-muted-foreground -mt-2 mb-4">
+            Press <kbd className="px-2 py-1.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">Tab</kbd> to insert a template.
+          </p>
           <Button onClick={handleSmartAdd}>Add to Tracker</Button>
         </CardContent>
       </Card>

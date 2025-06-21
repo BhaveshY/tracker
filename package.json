@@ -1,7 +1,7 @@
 {
-  "name": "ml-ai-roadmap-tracker",
+  "name": "trackify",
   "version": "1.0.0",
-  "description": "A comprehensive dashboard to track 6-month ML/AI project roadmap progress",
+  "description": "A comprehensive dashboard to track your projects and goals",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -19,7 +19,7 @@
     "portfolio",
     "projects"
   ],
-  "author": "ML Student",
+  "author": "Trackify User",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^7.6.0",

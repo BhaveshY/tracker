@@ -38,6 +38,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { ProjectForm } from './ProjectsView'; // Assuming ProjectForm is exported
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -49,6 +50,7 @@ function ProjectDetail() {
   const [activeTab, setActiveTab] = useState('tasks');
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
 
   const fetchProjectDetails = useCallback(async () => {
     if (!projectId) return;
@@ -96,6 +98,18 @@ function ProjectDetail() {
       fetchProjectDetails();
     } catch (error) {
       toast.error(isEditing ? 'Failed to update task.' : 'Failed to create task.', { id: toastId });
+    }
+  };
+  
+  const handleProjectSave = async (projectData) => {
+    const toastId = toast.loading('Updating project...');
+    try {
+      await axios.put(`/api/projects/${projectId}`, projectData);
+      toast.success('Project updated!', { id: toastId });
+      setProjectDialogOpen(false);
+      fetchProjectDetails();
+    } catch (error) {
+      toast.error('Failed to update project.', { id: toastId });
     }
   };
 
@@ -172,12 +186,18 @@ function ProjectDetail() {
             Back to Projects
           </Link>
         </Button>
-        <div>
-          <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(project.type)} mb-2 capitalize`}>
-            {project.type.replace('_', ' ')}
-          </span>
-          <h1 className="text-3xl font-bold">{project.title}</h1>
-          <p className="text-muted-foreground max-w-3xl mt-1">{project.description}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(project.type)} mb-2 capitalize`}>
+              {project.type.replace('_', ' ')}
+            </span>
+            <h1 className="text-3xl font-bold">{project.title}</h1>
+            <p className="text-muted-foreground max-w-3xl mt-1">{project.description}</p>
+          </div>
+          <Button variant="outline" onClick={() => setProjectDialogOpen(true)}>
+            <Edit size={16}/>
+            Edit Project
+          </Button>
         </div>
       </header>
 
@@ -248,6 +268,15 @@ function ProjectDetail() {
         onSave={handleTaskSave}
         task={editingTask}
       />
+      {project && (
+        <ProjectForm
+          key={project.id}
+          isOpen={projectDialogOpen}
+          setIsOpen={setProjectDialogOpen}
+          onSave={handleProjectSave}
+          project={project}
+        />
+      )}
     </div>
   );
 }

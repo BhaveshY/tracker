@@ -52,6 +52,7 @@ function ProjectsView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickAddTitle, setQuickAddTitle] = useState('');
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -77,6 +78,21 @@ function ProjectsView() {
       clearTimeout(handler);
     };
   }, [searchQuery, fetchProjects]);
+
+  const handleQuickAdd = async (e) => {
+    e.preventDefault();
+    if (!quickAddTitle.trim()) return;
+
+    const toastId = toast.loading('Quickly adding project...');
+    try {
+      await axios.post('/api/projects/quick-add', { title: quickAddTitle });
+      setQuickAddTitle('');
+      fetchProjects();
+      toast.success('Project added!', { id: toastId });
+    } catch (error) {
+      toast.error('Failed to quick-add project.', { id: toastId });
+    }
+  };
 
   const handleSave = async (formData) => {
     const isEditing = !!editingProject;
@@ -145,15 +161,25 @@ function ProjectsView() {
         </Button>
       </div>
 
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-        <Input 
-          placeholder="Search projects by title or description..." 
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6 items-center">
+        <form onSubmit={handleQuickAdd} className="md:col-span-1">
+          <Input 
+            placeholder="✨ Quickly add a new project... (e.g., 'Build a text summarizer')" 
+            value={quickAddTitle}
+            onChange={(e) => setQuickAddTitle(e.target.value)}
+          />
+        </form>
+        <div className="relative md:col-span-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input 
+            placeholder="Search projects by title or description..." 
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
+
 
       {projects.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
@@ -411,4 +437,4 @@ const ProjectCardSkeleton = () => (
 );
 
 
-export default ProjectsView; 
+export { ProjectsView as default, ProjectForm }; 
