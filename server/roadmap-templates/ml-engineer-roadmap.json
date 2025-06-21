@@ -1,0 +1,371 @@
+{
+  "name": "6-Month ML Engineer Roadmap",
+  "description": "A comprehensive 6-month plan covering fundamentals, CV, NLP, Recommender Systems, and advanced projects to become a job-ready Machine Learning Engineer.",
+  "months": [
+    {
+      "month_number": 1,
+      "title": "Fundamentals – Regression & Classification",
+      "description": "Master regression and classification basics.",
+      "projects": [
+        {
+          "title": "House Price Predictor (Regression)",
+          "description": "Use a small tabular dataset (e.g. Kaggle housing or Boston data) to build a linear regression model (scikit-learn). Apply data cleaning and exploratory analysis (Pandas/Matplotlib). Train/test-split and evaluate with MSE/R².\n\nLearning: Linear regression, train-test, feature engineering. Linear regression is “fundamental” in ML (used in pricing, forecasting).",
+          "type": "regression",
+          "tech_stack": "Python, Pandas/NumPy, scikit-learn (LinearRegression), Streamlit for UI",
+          "tasks": [
+            {
+              "title": "Deploy with Streamlit",
+              "description": "An input form (e.g. square footage) returns predicted price.",
+              "category": "deployment"
+            },
+            {
+              "title": "Containerize the app",
+              "description": "Use Streamlit Community Cloud or Heroku. Ensure a clean UI and “About” page.",
+              "category": "deployment"
+            },
+            {
+              "title": "Write a README",
+              "description": "Explain data source, model formula, and results (and blog post if possible).",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "Iris Flower Classifier (Classification)",
+          "description": "Using the classic Iris dataset, build a multi-class classifier (e.g. logistic regression or decision tree in scikit-learn). This reinforces classification and multiclass evaluation (accuracy, confusion matrix).\n\nLearning: Binary/multiclass classification; logistic regression (very common in ML tasks).",
+          "type": "classification",
+          "tech_stack": "Python, Pandas, scikit-learn (LogisticRegression or DecisionTreeClassifier), Streamlit",
+          "tasks": [
+            {
+              "title": "Deploy with Streamlit",
+              "description": "Inputs for flower measurements, output predicted species. Similar to Project 1.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document model accuracy",
+              "description": "Include details on model accuracy and any feature analysis.",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "DataCamp – Sklearn Linear Regression",
+          "url": "https://www.datacamp.com/tutorial/simplifying-machine-learning-with-scikit-learn-in-python",
+          "type": "tutorial",
+          "notes": "Guide to implementing linear regression with real examples."
+        },
+        {
+          "title": "DataCamp – Logistic Regression Tutorial",
+          "url": "https://campus.datacamp.com/courses/foundations-of-probability-in-python/probability-meets-statistics?ex=13",
+          "type": "tutorial",
+          "notes": "Intro to logistic regression for classification."
+        },
+        {
+          "title": "Machine Learning Mastery – Deploy Models with Streamlit",
+          "url": "https://machinelearningmastery.com/build-and-deploy-your-first-machine-learning-web-app/",
+          "type": "tutorial",
+          "notes": "Tutorial on deploying a regression model via Streamlit."
+        }
+      ]
+    },
+    {
+      "month_number": 2,
+      "title": "Computer Vision – Image Classification",
+      "description": "Build and deploy CNN models and explore transfer learning.",
+      "projects": [
+        {
+          "title": "Basic Image Classifier (CNN)",
+          "description": "Build a convolutional neural network to classify images from a simple dataset (e.g. CIFAR-10 or Fashion-MNIST). Start from a simple CNN architecture (Conv→ReLU→pooling→dense). Train on GPU if possible, monitor overfitting and use dropout or augmentation.\n\nLearning: CNN fundamentals (convolution, pooling, fully-connected layers). CNNs “learn hierarchical features like edges, textures, and shapes” enabling object recognition.",
+          "type": "computer_vision",
+          "tech_stack": "Python, TensorFlow/Keras or PyTorch (e.g. torchvision.datasets), Matplotlib for image plotting. Use GPU for training.",
+          "tasks": [
+            {
+              "title": "Deploy as a web app",
+              "description": "Make a web app (Streamlit/Flask) where a user uploads an image and the model returns the predicted class (e.g. dog vs cat). Include sample images.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document network architecture",
+              "description": "Explain network architecture, training curves, and accuracy.",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "Advanced CV (Transfer Learning or Detection)",
+          "description": "Use a pre-trained model on a CV task. For example, fine-tune a pre-trained ImageNet classifier on a new small image set, or perform object detection using a model like Faster R-CNN (PyTorch) on a COCO subset.\n\nLearning: Transfer learning and object detection concepts.",
+          "type": "computer_vision",
+          "tech_stack": "PyTorch (TorchVision), OpenCV for image processing, Streamlit or Flask.",
+          "tasks": [
+            {
+              "title": "Deploy via a web interface",
+              "description": "UI to upload an image, then display detections (or classification). Provide examples. Bounding boxes should be drawn for detected objects.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document model setup",
+              "description": "Note any special setup (e.g. masking confidence thresholds) and share the trained model weights.",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "PyTorch Tutorial – Training a Classifier",
+          "url": "https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html",
+          "type": "tutorial",
+          "notes": "Official tutorial training a CNN on CIFAR-10."
+        },
+        {
+          "title": "DataCamp – Intro to CNNs",
+          "url": "https://www.datacamp.com/tutorial/convolutional-neural-networks-python",
+          "type": "tutorial",
+          "notes": "Guide explaining CNNs and their role in image analysis."
+        }
+      ]
+    },
+    {
+      "month_number": 3,
+      "title": "Natural Language Processing (NLP)",
+      "description": "Work with transformers, BERT, and sequence-to-sequence tasks.",
+      "projects": [
+        {
+          "title": "Sentiment Analysis with BERT",
+          "description": "Use a pre-trained transformer (e.g. bert-base-uncased via HuggingFace) to classify movie reviews (IMDB) or tweets as positive/negative. Fine-tune the model on a labeled dataset.\n\nLearning: Transformer-based NLP (BERT), tokenization, fine-tuning on a text classification task.",
+          "type": "nlp",
+          "tech_stack": "Python, HuggingFace transformers library, PyTorch/TF backend.",
+          "tasks": [
+            {
+              "title": "Build a simple frontend",
+              "description": "A Streamlit or Flask app that accepts text input and shows the model’s sentiment label.",
+              "category": "deployment"
+            },
+            {
+              "title": "Explain preprocessing",
+              "description": "Document tokenization, model choice, and sample outputs.",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "Text Summarizer or Chatbot",
+          "description": "Implement a simple text summarization or Q&A tool. For example, use a pre-trained summarization model (e.g. T5 or Pegasus via HuggingFace pipeline) to condense paragraphs, or build a retrieval-based chatbot over a small knowledge base.\n\nLearning: Sequence-to-sequence tasks.",
+          "type": "nlp",
+          "tech_stack": "HuggingFace pipelines, Flask/Streamlit, possibly an external knowledge base (for a bot).",
+          "tasks": [
+            {
+              "title": "Deploy an interface",
+              "description": "Web form for text input and output. Include instructions and example usage.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document limitations",
+              "description": "Comment on limitations (e.g. input length), and model performance (ROUGE scores for summarization if measured).",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "KDnuggets – Fine-tuning BERT for Sentiment",
+          "url": "https://www.kdnuggets.com/how-to-fine-tune-bert-sentiment-analysis-hugging-face-transformers",
+          "type": "article",
+          "notes": "Explains using BERT for sentiment tasks."
+        },
+        {
+          "title": "Hugging Face Tutorial (Sentiment Analysis)",
+          "url": "https://huggingface.co/blog/sentiment-analysis-python",
+          "type": "tutorial",
+          "notes": "Demonstrates using the Hugging Face pipeline for sentiment in 5 lines."
+        },
+        {
+          "title": "Hugging Face Documentation (Summarization)",
+          "url": "https://huggingface.co/docs/transformers/tasks/summarization",
+          "type": "documentation",
+          "notes": "Describes how summarization pipelines work."
+        }
+      ]
+    },
+    {
+      "month_number": 4,
+      "title": "Recommender Systems",
+      "description": "Build collaborative and content-based filtering systems.",
+      "projects": [
+        {
+          "title": "Movie Recommender (Collaborative Filtering)",
+          "description": "Use the MovieLens dataset (e.g. 100k) to build a user-item collaborative filtering model. Start with a simple matrix factorization (SVD) using the Surprise library. Evaluate with RMSE/MAE on held-out ratings.\n\nLearning: Collaborative filtering (user-based or item-based).",
+          "type": "recommender",
+          "tech_stack": "Python, Surprise library (SVD or NMF algorithms), Pandas.",
+          "tasks": [
+            {
+              "title": "Build a web interface",
+              "description": "A Flask/Streamlit app to enter a user profile and get recommended items. Possibly pre-compute similarity.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document the algorithm",
+              "description": "Explain dataset preprocessing and justify algorithm choice.",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "Content-Based or Hybrid Recommender",
+          "description": "Build a content-based recommender for items (e.g. books or news). Use item metadata (text descriptions or genres) to compute item similarities (TF-IDF + cosine). Alternatively, implement a hybrid system.\n\nLearning: TF-IDF, cosine similarity, recommendation logic.",
+          "type": "recommender",
+          "tech_stack": "scikit-learn (TF-IDF vectorizer), Pandas, possibly light ML algorithms.",
+          "tasks": [
+            {
+              "title": "Deploy with a demo UI",
+              "description": "Input an item title or user preferences, output similar items.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document feature usage",
+              "description": "Cover how text features or tags are used to recommend.",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "RealPython – Collaborative Filtering Tutorial",
+          "url": "https://realpython.com/build-recommendation-engine-collaborative-filtering/",
+          "type": "tutorial",
+          "notes": "Covers CF basics and notes its industry use."
+        },
+        {
+          "title": "Surprise Library Guide",
+          "url": "https://surprise.readthedocs.io/en/stable/getting_started.html",
+          "type": "documentation",
+          "notes": "Documentation showing how to use Surprise with MovieLens for SVD factorization."
+        },
+        {
+          "title": "GroupLens MovieLens Dataset",
+          "url": "https://grouplens.org/datasets/movielens/20m/",
+          "type": "dataset",
+          "notes": "Information on MovieLens as a benchmark dataset."
+        }
+      ]
+    },
+    {
+      "month_number": 5,
+      "title": "Advanced/Integration Projects",
+      "description": "Combine multiple ML technologies and work with advanced models.",
+      "projects": [
+        {
+          "title": "Object Detection App",
+          "description": "Use a pretrained object-detection model (e.g. Faster R-CNN or YOLO) to detect objects in images. Fine-tune or simply run inference on sample images.\n\nLearning: Detection pipelines (region proposals, bounding boxes). Evaluation (mAP, IoU).",
+          "type": "computer_vision",
+          "tech_stack": "Python, PyTorch/TorchVision detection (fasterrcnn_resnet50_fpn), PIL/OpenCV.",
+          "tasks": [
+            {
+              "title": "Deploy as a web app",
+              "description": "User uploads an image, the app draws bounding boxes and labels (use OpenCV/Matplotlib).",
+              "category": "deployment"
+            },
+            {
+              "title": "Document model choice",
+              "description": "Describe model choice, inference time, and examples (e.g. detecting people/cars).",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "AI Chatbot Integration",
+          "description": "Build a simple conversational interface using an LLM. For example, connect to OpenAI’s GPT-3.5 or GPT-4 API (or an open-source Llama2 model) to answer user queries on a topic.\n\nLearning: Using LLM APIs or libraries. Prompt design and handling API responses.",
+          "type": "nlp",
+          "tech_stack": "Python, OpenAI Python SDK or HuggingFace Inference API, Flask or Streamlit.",
+          "tasks": [
+            {
+              "title": "Deploy a chat interface",
+              "description": "Webchat app that sends user input to the model and displays the conversation.",
+              "category": "deployment"
+            },
+            {
+              "title": "Document API usage",
+              "description": "Note API usage (keys/limits), sample dialogues, and fallback for unsupported queries.",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "PyTorch Detection Tutorial",
+          "url": "https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html",
+          "type": "tutorial",
+          "notes": "Official guide fine-tuning a detection model (Faster R-CNN) on COCO."
+        },
+        {
+          "title": "DataCamp – Using GPT via OpenAI API",
+          "url": "https://campus.datacamp.com/courses/working-with-the-openai-api/introduction-to-the-openai-api?ex=1",
+          "type": "tutorial",
+          "notes": "Shows how to programmatically talk to ChatGPT."
+        }
+      ]
+    },
+    {
+      "month_number": 6,
+      "title": "Capstone & Portfolio Polish",
+      "description": "Synthesize prior work into a capstone project and prepare for job applications.",
+      "projects": [
+        {
+          "title": "Full-Stack AI Web App",
+          "description": "Create a flagship app that integrates multiple ML capabilities. For example, an “AI Assistant” web interface that can handle image and text inputs: uploading an image triggers your CV models (classification/detection) and entering text uses your NLP models (chatbot or summarizer). Optionally include personalized recommendations.\n\nLearning: System design, handling multiple ML endpoints, full-stack integration.",
+          "type": "integration",
+          "tech_stack": "FastAPI/Flask backend, React or Streamlit front-end, Docker.",
+          "tasks": [
+            {
+              "title": "Publish the app online",
+              "description": "Deploy to Heroku or Streamlit Community Cloud. Ensure SSL/HTTPS and include instructions.",
+              "category": "deployment"
+            },
+            {
+              "title": "Write a project report",
+              "description": "A blog post covering architecture, challenges, and how to replicate.",
+              "category": "documentation"
+            }
+          ]
+        },
+        {
+          "title": "GitHub & Resume Enhancement",
+          "description": "Refine all previous code into well-structured GitHub repos. Ensure each repo has a clear README, code comments, and an example app.py or notebook. Create a personal data science portfolio site (e.g. GitHub Pages) linking your projects. Prepare a German/English CV highlighting these projects. Practice coding interview problems and ML concepts.",
+          "type": "career",
+          "tech_stack": "GitHub, Markdown, Jekyll/GitHub Pages.",
+          "tasks": [
+            {
+              "title": "Create Portfolio Site",
+              "description": "Build a personal portfolio website.",
+              "category": "deployment"
+            },
+            {
+              "title": "Polish all READMEs",
+              "description": "Ensure all project repositories are well-documented.",
+              "category": "documentation"
+            }
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "DataCamp – CI/CD for Machine Learning",
+          "url": "https://campus.datacamp.com/courses/cicd-for-machine-learning/introduction-to-continuous-integrationcontinuous-delivery-and-yaml?ex=1",
+          "type": "course",
+          "notes": "Guide to automating ML pipelines and deployments."
+        },
+        {
+          "title": "Analytics Vidhya – Heroku Deployment Guide",
+          "url": "https://www.analyticsvidhya.com/blog/2021/10/a-complete-guide-on-machine-learning-model-deployment-using-heroku/",
+          "type": "tutorial",
+          "notes": "Step-by-step to deploy ML models with Flask on Heroku."
+        }
+      ]
+    }
+  ]
+}

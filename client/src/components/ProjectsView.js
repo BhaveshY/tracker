@@ -8,7 +8,8 @@ import {
   Plus,
   FolderPlus,
   MoreVertical,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from "./ui/button";
@@ -91,6 +92,21 @@ function ProjectsView() {
       toast.success('Project added!', { id: toastId });
     } catch (error) {
       toast.error('Failed to quick-add project.', { id: toastId });
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (!window.confirm('Are you sure you want to delete this project? This will also delete all associated tasks and time logs.')) {
+      return;
+    }
+    const toastId = toast.loading('Deleting project...');
+    try {
+      await axios.delete(`/api/projects/${projectId}`);
+      toast.success('Project deleted!', { id: toastId });
+      fetchProjects(); // Refresh project list
+    } catch (error) {
+      toast.error('Failed to delete project.', { id: toastId });
+      console.error('Error deleting project:', error);
     }
   };
 
@@ -252,6 +268,9 @@ function ProjectsView() {
                     <DropdownMenuContent>
                       <DropdownMenuItem onClick={() => openDialog(project)}>
                         <Edit size={14} className="mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteProject(project.id)} className="text-red-500">
+                        <Trash2 size={14} className="mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

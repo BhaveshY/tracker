@@ -7,7 +7,6 @@ import {
   Target,
   TrendingUp,
   BookOpen,
-  X
 } from 'lucide-react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';

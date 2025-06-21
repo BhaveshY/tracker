@@ -56,12 +56,13 @@ const goalIcons = {
 
 function Goals() {
   const [goals, setGoals] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [milestones, setMilestones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('goals');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -82,7 +83,6 @@ function Goals() {
       });
 
       setGoals(updatedGoals);
-      setProjects(projectsResponse.data);
       setMilestones(milestonesResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -113,6 +113,19 @@ function Goals() {
     }
   };
 
+  const handleSaveMilestone = async (data) => {
+    const toastId = toast.loading('Updating milestone...');
+    try {
+      await axios.put(`/api/months/${editingMilestone.month}`, data);
+      toast.success('Milestone updated!', { id: toastId });
+      setMilestoneDialogOpen(false);
+      setEditingMilestone(null);
+      fetchData(); // Refresh all data
+    } catch (error) {
+      toast.error('Failed to update milestone.', { id: toastId });
+    }
+  };
+
   const handleDeleteGoal = async (goalId) => {
     const toastId = toast.loading('Deleting goal...');
     try {
@@ -132,6 +145,11 @@ function Goals() {
   const openNewDialog = () => {
     setEditingGoal(null);
     setDialogOpen(true);
+  };
+
+  const openMilestoneDialog = (milestone) => {
+    setEditingMilestone(milestone);
+    setMilestoneDialogOpen(true);
   };
 
   const getProgressPercentage = useCallback((goal) => {
@@ -179,7 +197,7 @@ function Goals() {
               onDelete={handleDeleteGoal}
             />
           )}
-          {activeTab === 'milestones' && <MilestonesTimeline milestones={milestones} />}
+          {activeTab === 'milestones' && <MilestonesTimeline milestones={milestones} onEdit={openMilestoneDialog} />}
         </div>
       </div>
 
@@ -189,6 +207,13 @@ function Goals() {
         setIsOpen={setDialogOpen}
         onSave={handleSaveGoal}
         goal={editingGoal}
+      />
+      <MilestoneForm
+        key={editingMilestone ? `milestone-${editingMilestone.month}` : 'new-milestone'}
+        isOpen={milestoneDialogOpen}
+        setIsOpen={setMilestoneDialogOpen}
+        onSave={handleSaveMilestone}
+        milestone={editingMilestone}
       />
     </div>
   );
@@ -284,49 +309,10 @@ const GoalsGrid = ({ goals, getProgressPercentage, onEdit, onDelete }) => (
   </div>
 );
 
-const getMilestones = (projects) => [
-    {
-      month: 1,
-      title: "Foundation Complete",
-      description: "Master regression and classification basics",
-      completed: projects.filter(p => p.month_id === 1 && p.status === 'completed').length >= 2
-    },
-    {
-      month: 2,
-      title: "Computer Vision Expert",
-      description: "Build and deploy CNN models",
-      completed: projects.filter(p => p.month_id === 2 && p.status === 'completed').length >= 2
-    },
-    {
-      month: 3,
-      title: "NLP Practitioner",
-      description: "Work with transformers and BERT",
-      completed: projects.filter(p => p.month_id === 3 && p.status === 'completed').length >= 2
-    },
-    {
-      month: 4,
-      title: "Recommendation Systems",
-      description: "Build collaborative filtering systems",
-      completed: projects.filter(p => p.month_id === 4 && p.status === 'completed').length >= 2
-    },
-    {
-      month: 5,
-      title: "Advanced Integration",
-      description: "Combine multiple ML technologies",
-      completed: projects.filter(p => p.month_id === 5 && p.status === 'completed').length >= 2
-    },
-    {
-      month: 6,
-      title: "Job Ready Portfolio",
-      description: "Complete portfolio for applications",
-      completed: projects.filter(p => p.month_id === 6 && p.status === 'completed').length >= 2
-    }
-];
-
-const MilestonesTimeline = ({ milestones }) => (
+const MilestonesTimeline = ({ milestones, onEdit }) => (
   <div className="max-w-3xl mx-auto">
     {milestones.map((milestone, index) => (
-      <div key={milestone.title} className="flex items-start gap-6">
+      <div key={milestone.title} className="relative flex items-start gap-6 group">
         <div className="flex flex-col items-center">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
             milestone.completed ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
@@ -342,10 +328,62 @@ const MilestonesTimeline = ({ milestones }) => (
           <h4 className="font-bold text-xl">{milestone.title}</h4>
           <p className="text-muted-foreground">{milestone.description}</p>
         </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => onEdit(milestone)}
+        >
+          <Edit size={16} />
+        </Button>
       </div>
     ))}
   </div>
 );
+
+const MilestoneForm = ({ isOpen, setIsOpen, onSave, milestone }) => {
+  const [formData, setFormData] = useState({ title: '', description: '' });
+
+  useEffect(() => {
+    if (milestone) {
+      setFormData({
+        title: milestone.title || '',
+        description: milestone.description || '',
+      });
+    }
+  }, [milestone]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Milestone</DialogTitle>
+          <DialogDescription>Update the details for this roadmap milestone.</DialogDescription>
+        </DialogHeader>
+        <form id="milestone-form" onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Milestone Title</Label>
+            <Input id="title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea id="description" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+          </div>
+        </form>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+          <Button type="submit" form="milestone-form">Save Changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 
 const GoalForm = ({ isOpen, setIsOpen, onSave, goal }) => {
   const [formData, setFormData] = useState({

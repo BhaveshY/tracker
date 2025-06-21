@@ -4,7 +4,7 @@
   "description": "A comprehensive dashboard to track your projects and goals",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "npx kill-port 5001 && concurrently \"npm run server\" \"npm run client\"",
     "server": "npx nodemon server/index.js",
     "client": "cd client && npx craco start",
     "build": "cd client && npx craco build",

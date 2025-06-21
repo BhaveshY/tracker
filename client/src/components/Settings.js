@@ -16,6 +16,16 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 function Settings() {
   const [settings, setSettings] = useState({
@@ -44,6 +54,10 @@ function Settings() {
   });
 
   const [activeTab, setActiveTab] = useState('profile');
+  const [seedDialogOpen, setSeedDialogOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+
 
   useEffect(() => {
     // Load settings from localStorage
@@ -52,6 +66,22 @@ function Settings() {
       setSettings(JSON.parse(savedSettings));
     }
   }, []);
+
+  useEffect(() => {
+    if (seedDialogOpen) {
+      axios.get('/api/roadmap/templates')
+        .then(response => {
+          setTemplates(response.data);
+          if (response.data.length > 0) {
+            setSelectedTemplate(response.data[0].id);
+          }
+        })
+        .catch(error => {
+          toast.error("Could not load roadmap templates.");
+          console.error("Error fetching templates:", error);
+        });
+    }
+  }, [seedDialogOpen]);
 
   const handleSave = () => {
     localStorage.setItem('ml-tracker-settings', JSON.stringify(settings));
@@ -112,10 +142,37 @@ function Settings() {
     }
   };
 
-  const resetAllData = () => {
+  const resetAllData = async () => {
     if (window.confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
-      localStorage.clear();
-      window.location.reload();
+      const toastId = toast.loading('Resetting all data...');
+      try {
+        await axios.post('/api/data/reset');
+        localStorage.clear();
+        toast.success('All data has been reset!', { id: toastId });
+        // Force a hard reload to clear all state
+        window.location.href = '/'; 
+      } catch (error) {
+        console.error('Error resetting data:', error);
+        toast.error('Failed to reset data.', { id: toastId });
+      }
+    }
+  };
+
+  const loadRoadmapTemplate = async () => {
+    if (!selectedTemplate) {
+      toast.error("Please select a template.");
+      return;
+    }
+    const toastId = toast.loading('Loading roadmap template...');
+    try {
+      await axios.post('/api/roadmap/seed', { templateId: selectedTemplate });
+      toast.success('Roadmap template loaded successfully!', { id: toastId });
+      setSeedDialogOpen(false);
+      // Redirect to dashboard to see the changes
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error loading roadmap template:', error);
+      toast.error('Failed to load roadmap template.', { id: toastId });
     }
   };
 
@@ -322,18 +379,57 @@ function Settings() {
                     </Select>
                   </div>
                 </CardContent>
-                <CardFooter className="flex gap-3">
-                  <Button onClick={exportData} variant="secondary">
-                    <Download size={16} />
-                    Export Data
-                  </Button>
-                  <Button asChild variant="secondary" className="cursor-pointer">
-                    <Label>
-                      <Upload size={16} />
-                      Import Data
-                      <Input type="file" accept=".json" className="hidden" onChange={importData} />
-                    </Label>
-                  </Button>
+                <CardFooter className="flex flex-col items-start gap-3">
+                  <div className="flex gap-3">
+                    <Button onClick={exportData} variant="secondary">
+                      <Download size={16} />
+                      Export Data
+                    </Button>
+                    <Button asChild variant="secondary" className="cursor-pointer">
+                      <Label>
+                        <Upload size={16} />
+                        Import Data
+                        <Input type="file" accept=".json" className="hidden" onChange={importData} />
+                      </Label>
+                    </Button>
+                  </div>
+                   <Dialog open={seedDialogOpen} onOpenChange={setSeedDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">Load Roadmap Template</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Load a Roadmap Template</DialogTitle>
+                        <DialogDescription>
+                          Select a template to load. This will replace all projects, tasks, and resources.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <Label htmlFor="template-select">Choose a roadmap</Label>
+                        <Select onValueChange={setSelectedTemplate} defaultValue={selectedTemplate}>
+                          <SelectTrigger id="template-select">
+                            <SelectValue placeholder="Select a template" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {templates.map(template => (
+                              <SelectItem key={template.id} value={template.id}>
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedTemplate && templates.find(t => t.id === selectedTemplate) &&
+                           <p className="text-sm text-muted-foreground mt-2">
+                            {templates.find(t => t.id === selectedTemplate).description}
+                           </p>
+                        }
+                      </div>
+                      <DialogFooter>
+                        <Button variant="ghost" onClick={() => setSeedDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={loadRoadmapTemplate} disabled={!selectedTemplate}>Load Template</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </CardFooter>
               </Card>
 

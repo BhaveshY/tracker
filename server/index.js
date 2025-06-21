@@ -19,6 +19,22 @@ const db = new sqlite3.Database(dbPath);
 
 // Initialize database tables
 db.serialize(() => {
+  // Migration: Add 'category' to tasks table if not exists
+  db.all("PRAGMA table_info(tasks)", (err, columns) => {
+    if (err) {
+      console.error("Error fetching table info for tasks:", err);
+      return;
+    }
+    const hasCategory = columns.some(col => col.name === 'category');
+    if (!hasCategory) {
+      db.run("ALTER TABLE tasks ADD COLUMN category TEXT DEFAULT 'general'", (err) => {
+        if (err) {
+          console.error("Error adding 'category' column to tasks:", err);
+        }
+      });
+    }
+  });
+
   // Months table
   db.run(`CREATE TABLE IF NOT EXISTS months (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,6 +111,7 @@ db.serialize(() => {
     priority TEXT DEFAULT 'medium',
     due_date DATE,
     completed_at DATETIME,
+    category TEXT DEFAULT 'general',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects (id)
   )`);
@@ -351,6 +368,31 @@ app.get('/api/months/:monthNumber', (req, res) => {
   });
 });
 
+// Update month (milestone) details
+app.put('/api/months/:monthNumber', (req, res) => {
+  const { monthNumber } = req.params;
+  const { title, description } = req.body;
+
+  if (!title || !description) {
+    return res.status(400).json({ error: 'Title and description are required' });
+  }
+
+  db.run(
+    'UPDATE months SET title = ?, description = ? WHERE month_number = ?',
+    [title, description, monthNumber],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Month not found' });
+      }
+      res.json({ message: 'Milestone updated successfully' });
+    }
+  );
+});
+
 // Get all projects
 app.get('/api/projects', (req, res) => {
   db.all('SELECT * FROM projects ORDER BY month_id, title', (err, rows) => {
@@ -451,6 +493,49 @@ app.post('/api/projects', (req, res) => {
       });
     }
   );
+});
+
+// Delete a project
+app.delete('/api/projects/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.serialize(() => {
+    db.run("BEGIN TRANSACTION", (err) => {
+      if (err) return res.status(500).json({ error: 'Failed to begin transaction', details: err.message });
+    });
+
+    db.run('DELETE FROM tasks WHERE project_id = ?', id, (err) => {
+      if (err) {
+        db.run("ROLLBACK");
+        return res.status(500).json({ error: 'Failed to delete tasks', details: err.message });
+      }
+    });
+
+    db.run('DELETE FROM time_logs WHERE project_id = ?', id, (err) => {
+      if (err) {
+        db.run("ROLLBACK");
+        return res.status(500).json({ error: 'Failed to delete time logs', details: err.message });
+      }
+    });
+
+    db.run('DELETE FROM projects WHERE id = ?', id, function(err) {
+      if (err) {
+        db.run("ROLLBACK");
+        return res.status(500).json({ error: 'Failed to delete project', details: err.message });
+      }
+      if (this.changes === 0) {
+        db.run("ROLLBACK");
+        return res.status(404).json({ error: 'Project not found' });
+      }
+    });
+
+    db.run("COMMIT", (commitErr) => {
+      if (commitErr) {
+        return res.status(500).json({ error: 'Failed to commit transaction', details: commitErr.message });
+      }
+      res.status(204).send();
+    });
+  });
 });
 
 // Update project
@@ -763,6 +848,191 @@ app.get('/api/resources/search', (req, res) => {
     }
   );
 });
+
+// --- DATA MANAGEMENT API ---
+app.post('/api/data/reset', (req, res) => {
+    const tables = ['tasks', 'goals', 'time_logs', 'learning_resources', 'projects', 'months'];
+    
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION", (err) => {
+            if (err) return res.status(500).json({ error: 'Failed to begin transaction', details: err.message });
+        });
+
+        tables.forEach(table => {
+            db.run(`DELETE FROM ${table}`, (err) => {
+                if (err) {
+                    db.run("ROLLBACK");
+                    return res.status(500).json({ error: `Failed to delete from ${table}`, details: err.message });
+                }
+            });
+        });
+
+        // Reset the autoincrement sequence for months table
+        db.run("DELETE FROM sqlite_sequence WHERE name='months'", (err) => {
+             if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: 'Failed to reset sequence', details: err.message });
+            }
+        });
+
+        const initialMonths = [
+            { num: 1, title: 'Month 1: Fundamentals', desc: 'Regression & Classification' },
+            { num: 2, title: 'Month 2: Computer Vision', desc: 'CNNs & Transfer Learning' },
+            { num: 3, title: 'Month 3: NLP', desc: 'BERT & Transformers' },
+            { num: 4, title: 'Month 4: Recommender Systems', desc: 'Collaborative & Content-based' },
+            { num: 5, title: 'Month 5: Advanced Integration', desc: 'Object Detection & LLM Integration' },
+            { num: 6, title: 'Month 6: Capstone & Polish', desc: 'Capstone Project & Portfolio Polish' },
+        ];
+        
+        const stmt = db.prepare("INSERT INTO months (month_number, title, description) VALUES (?, ?, ?)");
+        initialMonths.forEach(m => {
+            stmt.run(m.num, m.title, m.desc);
+        });
+        
+        stmt.finalize((err) => {
+            if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: 'Failed to re-initialize months', details: err.message });
+            }
+
+            db.run("COMMIT", (commitErr) => {
+                if (commitErr) {
+                    return res.status(500).json({ error: 'Failed to commit transaction', details: commitErr.message });
+                }
+                res.status(200).json({ message: 'All data has been reset successfully.' });
+            });
+        });
+    });
+});
+
+app.get('/api/roadmap/templates', (req, res) => {
+    const fs = require('fs');
+    const templatesDir = path.join(__dirname, 'roadmap-templates');
+
+    fs.readdir(templatesDir, (err, files) => {
+        if (err) {
+            console.error("Error reading templates directory:", err);
+            return res.status(500).json({ error: 'Could not list roadmap templates.' });
+        }
+
+        const promises = files
+            .filter(file => file.endsWith('.json'))
+            .map(file => {
+                return new Promise((resolve, reject) => {
+                    const filePath = path.join(templatesDir, file);
+                    fs.readFile(filePath, 'utf8', (err, data) => {
+                        if (err) return reject(err);
+                        try {
+                            const templateData = JSON.parse(data);
+                            resolve({
+                                id: file.replace('.json', ''),
+                                name: templateData.name || 'Unnamed Template',
+                                description: templateData.description || 'No description available.'
+                            });
+                        } catch (parseErr) {
+                            reject(parseErr);
+                        }
+                    });
+                });
+            });
+
+        Promise.all(promises)
+            .then(templates => res.json(templates))
+            .catch(error => {
+                console.error("Failed to read or parse template files:", error);
+                res.status(500).json({ error: 'Failed to read template files.', details: error.message });
+            });
+    });
+});
+
+app.post('/api/roadmap/seed', (req, res) => {
+    const fs = require('fs');
+    const { templateId } = req.body;
+
+    if (!templateId) {
+        return res.status(400).json({ error: 'templateId is required.' });
+    }
+
+    const safeTemplateId = path.basename(templateId);
+    const templatePath = path.join(__dirname, 'roadmap-templates', `${safeTemplateId}.json`);
+
+    fs.readFile(templatePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error(`Error reading roadmap template (${templatePath}):`, err);
+            return res.status(500).json({ error: `Could not read roadmap template: ${safeTemplateId}` });
+        }
+
+        const template = JSON.parse(data);
+        const tablesToClear = ['tasks', 'learning_resources', 'projects'];
+
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION", (err) => {
+                if (err) return res.status(500).json({ error: 'Failed to begin transaction', details: err.message });
+            });
+
+            let completedClears = 0;
+            tablesToClear.forEach(table => {
+                db.run(`DELETE FROM ${table}`, (err) => {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return res.status(500).json({ error: `Failed to delete from ${table}`, details: err.message });
+                    }
+                    completedClears++;
+                    if (completedClears === tablesToClear.length) {
+                        seedData();
+                    }
+                });
+            });
+
+            const seedData = () => {
+                const monthStmt = db.prepare("UPDATE months SET title = ?, description = ? WHERE month_number = ?");
+                const projectStmt = db.prepare("INSERT INTO projects (id, month_id, title, description, type, tech_stack) VALUES (?, ?, ?, ?, ?, ?)");
+                const taskStmt = db.prepare("INSERT INTO tasks (id, project_id, title, description, category) VALUES (?, ?, ?, ?, ?)");
+                const resourceStmt = db.prepare("INSERT INTO learning_resources (id, month_id, title, url, type, notes) VALUES (?, ?, ?, ?, ?, ?)");
+
+                template.months.forEach(month => {
+                    monthStmt.run(month.title, month.description, month.month_number);
+
+                    if(month.projects) {
+                      month.projects.forEach(project => {
+                          const projectId = uuidv4();
+                          projectStmt.run(projectId, month.month_number, project.title, project.description, project.type, project.tech_stack);
+                          
+                          if(project.tasks) {
+                            project.tasks.forEach(task => {
+                                taskStmt.run(uuidv4(), projectId, task.title, task.description, task.category);
+                            });
+                          }
+                      });
+                    }
+
+                    if(month.resources) {
+                      month.resources.forEach(resource => {
+                          resourceStmt.run(uuidv4(), month.month_number, resource.title, resource.url, resource.type, resource.notes);
+                      });
+                    }
+                });
+
+                monthStmt.finalize();
+                projectStmt.finalize();
+                taskStmt.finalize();
+                resourceStmt.finalize((err) => {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return res.status(500).json({ error: 'Failed to finalize statements', details: err.message });
+                    }
+                    db.run("COMMIT", (commitErr) => {
+                        if (commitErr) {
+                            return res.status(500).json({ error: 'Failed to commit transaction', details: commitErr.message });
+                        }
+                        res.status(200).json({ message: 'Roadmap seeded successfully.' });
+                    });
+                });
+            };
+        });
+    });
+});
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Trackify server running on port ${PORT}`);

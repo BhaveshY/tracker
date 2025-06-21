@@ -9,7 +9,6 @@ import {
   Trophy,
   Target,
   TrendingUp,
-  Settings,
   X,
   Palette
 } from 'lucide-react';
