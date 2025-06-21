@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   ExternalLink, 
@@ -6,7 +6,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Search
 } from 'lucide-react';
 import { Button } from "./ui/button";
 import {
@@ -23,34 +24,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import toast from 'react-hot-toast';
 import Skeleton from 'react-loading-skeleton';
+import { Input } from './ui/input';
 
 function ResourcesView() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingResource, setEditingResource] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchResources();
-  }, []);
-
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/learning-resources');
+      const endpoint = searchQuery
+        ? `/api/resources/search?q=${encodeURIComponent(searchQuery)}`
+        : '/api/learning-resources';
+      const response = await axios.get(endpoint);
       setResources(response.data);
     } catch (error) {
       toast.error('Error fetching resources.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchResources();
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, fetchResources]);
 
   const handleSave = async (formData) => {
     const toastId = toast.loading('Updating resource...');
@@ -88,6 +97,38 @@ function ResourcesView() {
     return acc;
   }, {});
 
+  const renderResource = (resource) => (
+    <div key={resource.id} className="flex items-center justify-between p-4 border rounded-lg">
+      <div className="flex items-center gap-4 flex-1">
+        {getStatusIcon(resource.status)}
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-1">
+            <h4 className="font-medium">{resource.title}</h4>
+            <Badge variant="outline" className="text-xs">{resource.type}</Badge>
+          </div>
+          
+          {resource.notes && (
+            <p className="text-sm text-muted-foreground">{resource.notes}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {getStatusBadge(resource.status)}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setEditingResource(resource)}>
+            <Edit size={16} />
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <a href={resource.url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={16} />
+            </a>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return <ResourcesSkeleton />;
   }
@@ -101,51 +142,41 @@ function ResourcesView() {
         </p>
       </div>
 
+      <div className="mb-6 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input 
+          placeholder="Search resources by title, notes, or type..." 
+          className="pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       <div className="space-y-8">
-        {Object.keys(groupedResources).sort().map((month) => (
-          <Card key={month}>
-            <CardHeader>
-              <CardTitle>{month} Resources</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {groupedResources[month].filter(r => r.status === 'completed').length} of {groupedResources[month].length} completed
-              </p>
-            </CardHeader>
+        {searchQuery ? (
+          <div className="grid gap-4">
+            {resources.length > 0 ? (
+              resources.map(renderResource)
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No resources match your search.</p>
+            )}
+          </div>
+        ) : (
+          Object.keys(groupedResources).sort().map((month) => (
+            <Card key={month}>
+              <CardHeader>
+                <CardTitle>{month} Resources</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {groupedResources[month].filter(r => r.status === 'completed').length} of {groupedResources[month].length} completed
+                </p>
+              </CardHeader>
 
-            <CardContent className="grid gap-4">
-              {groupedResources[month].map((resource) => (
-                <div key={resource.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4 flex-1">
-                    {getStatusIcon(resource.status)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h4 className="font-medium">{resource.title}</h4>
-                        <Badge variant="outline" className="text-xs">{resource.type}</Badge>
-                      </div>
-                      
-                      {resource.notes && (
-                        <p className="text-sm text-muted-foreground">{resource.notes}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {getStatusBadge(resource.status)}
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => setEditingResource(resource)}>
-                        <Edit size={16} />
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink size={16} />
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
+              <CardContent className="grid gap-4">
+                {groupedResources[month].map(renderResource)}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {editingResource && (

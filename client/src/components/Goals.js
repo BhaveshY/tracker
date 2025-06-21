@@ -209,69 +209,77 @@ const TabButton = ({ name, activeTab, setActiveTab, icon, children }) => (
 
 const GoalsGrid = ({ goals, getProgressPercentage, onEdit, onDelete }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {goals.map((goal) => {
-      const progress = getProgressPercentage(goal);
-      const { icon: Icon, color } = goalIcons[goal.type] || goalIcons.project;
-      const daysLeft = differenceInDays(new Date(goal.target_date), new Date());
-      
-      let statusBadge;
-      if (progress >= 100) {
-        statusBadge = <Badge variant="success">Completed</Badge>;
-      } else if (daysLeft < 0) {
-        statusBadge = <Badge variant="destructive">Overdue</Badge>;
-      } else if (daysLeft <= 7) {
-        statusBadge = <Badge variant="warning">Due Soon</Badge>;
-      } else {
-        statusBadge = <Badge variant="secondary">Active</Badge>;
-      }
-      
-      return (
-        <Card key={goal.id} className="flex flex-col">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Icon className={`w-6 h-6 ${color}`} />
+    {goals.length > 0 ? (
+      goals.map((goal) => {
+        const progress = getProgressPercentage(goal);
+        const { icon: Icon, color } = goalIcons[goal.type] || goalIcons.project;
+        const daysLeft = differenceInDays(new Date(goal.target_date), new Date());
+        
+        let statusBadge;
+        if (progress >= 100) {
+          statusBadge = <Badge variant="success">Completed</Badge>;
+        } else if (daysLeft < 0) {
+          statusBadge = <Badge variant="destructive">Overdue</Badge>;
+        } else if (daysLeft <= 7) {
+          statusBadge = <Badge variant="warning">Due Soon</Badge>;
+        } else {
+          statusBadge = <Badge variant="secondary">Active</Badge>;
+        }
+        
+        return (
+          <Card key={goal.id} className="flex flex-col">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                    <Icon className={`w-6 h-6 ${color}`} />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{goal.title}</CardTitle>
+                    <CardDescription className="capitalize">{goal.type}</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">{goal.title}</CardTitle>
-                  <CardDescription className="capitalize">{goal.type}</CardDescription>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical size={16}/>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => onEdit(goal)}><Edit size={14} className="mr-2"/> Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(goal.id)} className="text-red-500"><Trash2 size={14} className="mr-2"/> Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-muted-foreground h-10">{goal.description}</p>
+            </CardContent>
+            <CardFooter className="flex-col items-start">
+              <div className="w-full">
+                <div className="flex justify-between items-center text-sm mb-2">
+                  <span className="font-medium text-muted-foreground">Progress</span>
+                  <span className="font-bold">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} />
+                <div className="flex justify-between items-center mt-2">
+                  {statusBadge}
+                  <div className="text-xs text-muted-foreground">
+                    {daysLeft >= 0 ? `${daysLeft} days left` : 'Deadline passed'}
+                  </div>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical size={16}/>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onEdit(goal)}><Edit size={14} className="mr-2"/> Edit</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onDelete(goal.id)} className="text-red-500"><Trash2 size={14} className="mr-2"/> Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground h-10">{goal.description}</p>
-          </CardContent>
-          <CardFooter className="flex-col items-start">
-            <div className="w-full">
-              <div className="flex justify-between items-center text-sm mb-2">
-                <span className="font-medium text-muted-foreground">Progress</span>
-                <span className="font-bold">{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} />
-              <div className="flex justify-between items-center mt-2">
-                {statusBadge}
-                <div className="text-xs text-muted-foreground">
-                  {daysLeft >= 0 ? `${daysLeft} days left` : 'Deadline passed'}
-                </div>
-              </div>
-            </div>
-          </CardFooter>
-        </Card>
-      );
-    })}
+            </CardFooter>
+          </Card>
+        );
+      })
+    ) : (
+      <div className="md:col-span-2 lg:col-span-3 text-center py-16 border-2 border-dashed rounded-lg">
+        <Target className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-medium">No goals yet</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Get started by creating a new goal or using Smart Add on the dashboard.</p>
+      </div>
+    )}
   </div>
 );
 

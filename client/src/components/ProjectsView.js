@@ -7,7 +7,8 @@ import {
   Edit,
   Plus,
   FolderPlus,
-  MoreVertical
+  MoreVertical,
+  Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from "./ui/button";
@@ -50,22 +51,32 @@ function ProjectsView() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/projects');
+      const endpoint = searchQuery 
+        ? `/api/projects/search?q=${encodeURIComponent(searchQuery)}`
+        : '/api/projects';
+      const response = await axios.get(endpoint);
       setProjects(response.data);
     } catch (error) {
       toast.error('Error fetching projects.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    const handler = setTimeout(() => {
+      fetchProjects();
+    }, 300); // Debounce search requests
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, fetchProjects]);
 
   const handleSave = async (formData) => {
     const isEditing = !!editingProject;
@@ -134,11 +145,23 @@ function ProjectsView() {
         </Button>
       </div>
 
+      <div className="mb-6 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Input 
+          placeholder="Search projects by title or description..." 
+          className="pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
       {projects.length === 0 ? (
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
           <FolderPlus className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-2 text-sm font-medium">No projects</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Get started by creating a new project.</p>
+          <h3 className="mt-2 text-sm font-medium">{searchQuery ? 'No projects match your search.' : 'No projects found'}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {searchQuery ? 'Try a different search term.' : 'Get started by creating a new project or using the Smart Add feature on the dashboard.'}
+          </p>
           <div className="mt-6">
             <Button onClick={() => openDialog()}>
               <Plus size={16} className="mr-2" />

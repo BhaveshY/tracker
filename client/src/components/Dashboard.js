@@ -9,16 +9,19 @@ import {
   ExternalLink,
   ArrowRight,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import Skeleton from 'react-loading-skeleton';
+import { Textarea } from './ui/textarea';
+import toast from 'react-hot-toast';
 
 function Dashboard() {
   const [stats, setStats] = useState(null);
   const [months, setMonths] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [smartAddText, setSmartAddText] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -38,6 +41,23 @@ function Dashboard() {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSmartAdd = async () => {
+    if (!smartAddText.trim()) {
+      toast.error('Please enter some text to add.');
+      return;
+    }
+    const toastId = toast.loading('Adding items...');
+    try {
+      const response = await axios.post('/api/smart-add', { text: smartAddText });
+      toast.success(response.data.message || 'Items added successfully!', { id: toastId });
+      setSmartAddText('');
+      fetchDashboardData(); // Refresh dashboard data
+    } catch (error) {
+      console.error('Error with smart add:', error);
+      toast.error(error.response?.data?.message || 'Failed to add items.', { id: toastId });
     }
   };
 
@@ -65,10 +85,41 @@ function Dashboard() {
             ML/AI Roadmap Dashboard
           </h1>
           <p className="text-muted-foreground">
-            Your 6-month journey to becoming a job-ready ML Engineer.
+            Your personal journey to becoming a job-ready ML Engineer.
           </p>
         </div>
       </div>
+      
+      <Card className="mb-8">
+         <CardHeader>
+          <CardTitle>🚀 Smart Add</CardTitle>
+          <CardDescription>
+            Paste your projects, goals, or tasks below. Use keywords like "Project:", "Task:", "Goal:", etc.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder={
+`Project: My Awesome Project
+Description: A cool project to learn stuff.
+Month: 1
+Type: classification
+Task: Setup environment
+Priority: high
+Task: Collect data
+Due Date: 2024-12-31
+
+Goal: Finish Coursera course
+Type: learning
+Target Date: 2024-09-01`
+            }
+            value={smartAddText}
+            onChange={(e) => setSmartAddText(e.target.value)}
+            className="min-h-[150px] mb-4 font-mono text-sm"
+          />
+          <Button onClick={handleSmartAdd}>Add to Tracker</Button>
+        </CardContent>
+      </Card>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -112,7 +163,7 @@ function Dashboard() {
           </CardHeader>
           
           <CardContent className="space-y-3">
-            {months.map((month) => {
+            {months.length > 0 ? months.map((month) => {
               const progress = calculateProgress(month.completed_projects, month.total_projects);
               const isCompleted = progress === 100;
               
@@ -147,7 +198,12 @@ function Dashboard() {
                   )}
                 </Link>
               );
-            })}
+            }) : (
+              <div className="text-center py-10 text-muted-foreground">
+                <p>No months with projects found.</p>
+                <p className="text-sm">Add projects using the Smart Add feature above to see them here.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -188,6 +244,17 @@ const DashboardSkeleton = () => (
         <Skeleton width={400} height={20} className="mt-1" />
       </div>
     </div>
+    
+    <Card className="mb-8">
+       <CardHeader>
+        <Skeleton width={200} height={28} />
+        <Skeleton width={300} height={20} />
+      </CardHeader>
+      <CardContent>
+        <Skeleton height={120} className="mb-4" />
+        <Skeleton width={120} height={40} />
+      </CardContent>
+    </Card>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {[...Array(4)].map((_, i) => (

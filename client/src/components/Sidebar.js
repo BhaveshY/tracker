@@ -26,14 +26,7 @@ const navigation = [
   { name: 'Goals', href: '/goals', icon: Trophy },
 ];
 
-const monthNavigation = [
-  { name: 'Month 1: Fundamentals', href: '/month/1' },
-  { name: 'Month 2: Computer Vision', href: '/month/2' },
-  { name: 'Month 3: NLP', href: '/month/3' },
-  { name: 'Month 4: Recommenders', href: '/month/4' },
-  { name: 'Month 5: Advanced', href: '/month/5' },
-  { name: 'Month 6: Capstone', href: '/month/6' },
-];
+
 
 function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
@@ -89,38 +82,7 @@ function Sidebar({ isOpen, onClose }) {
               })}
             </div>
 
-            <div className="mt-6">
-              <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Roadmap
-              </p>
-              <div className="space-y-1 relative pl-7">
-                <div className="absolute left-[18px] top-2 bottom-2 w-0.5 bg-border"></div>
-                {monthNavigation.map((item, index) => {
-                  const isActive = location.pathname === item.href;
-                  
-                  return (
-                    <div key={item.name} className="relative">
-                      <div className={cn(
-                        "absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-card border-2",
-                        isActive ? "border-primary bg-primary" : "border-border"
-                      )}></div>
-                      <Button
-                        variant="link"
-                        className={cn(
-                          "w-full justify-start h-auto py-1.5 text-sm",
-                          isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
-                        )}
-                        asChild
-                      >
-                        <Link to={item.href} onClick={onClose}>
-                          <span className="truncate">{item.name}</span>
-                        </Link>
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            
           </nav>
 
           <div className="mt-auto pt-4 border-t space-y-2">

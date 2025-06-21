@@ -100,178 +100,198 @@ db.serialize(() => {
   )`);
 
   // Initialize roadmap data
-  initializeRoadmapData();
+
 });
 
-function initializeRoadmapData() {
-  const roadmapData = [
-    {
-      month: 1,
-      title: "Fundamentals – Regression & Classification",
-      description: "Build foundation with regression and classification projects",
-      projects: [
-        {
-          title: "House Price Predictor",
-          description: "Linear regression model with Streamlit deployment",
-          type: "regression",
-          tech_stack: "Python, Pandas, scikit-learn, Streamlit"
-        },
-        {
-          title: "Iris Flower Classifier",
-          description: "Multi-class classification with logistic regression",
-          type: "classification",
-          tech_stack: "Python, scikit-learn, Streamlit"
-        }
-      ],
-      resources: [
-        { title: "DataCamp – Sklearn Linear Regression", url: "https://www.datacamp.com", type: "tutorial" },
-        { title: "DataCamp – Logistic Regression Tutorial", url: "https://www.datacamp.com", type: "tutorial" },
-        { title: "Machine Learning Mastery – Deploy Models with Streamlit", url: "https://machinelearningmastery.com", type: "tutorial" }
-      ]
-    },
-    {
-      month: 2,
-      title: "Computer Vision – Image Classification",
-      description: "Build CNN models and learn transfer learning",
-      projects: [
-        {
-          title: "Basic Image Classifier (CNN)",
-          description: "CNN for CIFAR-10 or Fashion-MNIST classification",
-          type: "computer_vision",
-          tech_stack: "Python, TensorFlow/Keras, Streamlit"
-        },
-        {
-          title: "Advanced CV (Transfer Learning)",
-          description: "Fine-tune pre-trained models or object detection",
-          type: "computer_vision",
-          tech_stack: "PyTorch, TorchVision, OpenCV"
-        }
-      ],
-      resources: [
-        { title: "PyTorch Tutorial – Training a Classifier", url: "https://pytorch.org", type: "tutorial" },
-        { title: "DataCamp – Intro to CNNs", url: "https://www.datacamp.com", type: "tutorial" }
-      ]
-    },
-    {
-      month: 3,
-      title: "Natural Language Processing (NLP)",
-      description: "Work with transformers and text processing",
-      projects: [
-        {
-          title: "Sentiment Analysis with BERT",
-          description: "Fine-tune BERT for sentiment classification",
-          type: "nlp",
-          tech_stack: "Python, HuggingFace, PyTorch"
-        },
-        {
-          title: "Text Summarizer or Chatbot",
-          description: "Build summarization or Q&A system",
-          type: "nlp",
-          tech_stack: "HuggingFace, Flask/Streamlit"
-        }
-      ],
-      resources: [
-        { title: "KDnuggets – Fine-tuning BERT for Sentiment", url: "https://www.kdnuggets.com", type: "tutorial" },
-        { title: "Hugging Face Tutorial (Sentiment Analysis)", url: "https://huggingface.co", type: "tutorial" }
-      ]
-    },
-    {
-      month: 4,
-      title: "Recommender Systems",
-      description: "Build collaborative and content-based recommenders",
-      projects: [
-        {
-          title: "Movie Recommender (Collaborative Filtering)",
-          description: "Matrix factorization with MovieLens dataset",
-          type: "recommender",
-          tech_stack: "Python, Surprise library, Pandas"
-        },
-        {
-          title: "Content-Based Recommender",
-          description: "TF-IDF based item similarity system",
-          type: "recommender",
-          tech_stack: "scikit-learn, Pandas"
-        }
-      ],
-      resources: [
-        { title: "RealPython – Collaborative Filtering Tutorial", url: "https://realpython.com", type: "tutorial" },
-        { title: "Surprise Library Guide", url: "https://surprise.readthedocs.io", type: "documentation" }
-      ]
-    },
-    {
-      month: 5,
-      title: "Advanced/Integration Projects",
-      description: "Advanced models and system integration",
-      projects: [
-        {
-          title: "Object Detection App",
-          description: "YOLO or Faster R-CNN based detection system",
-          type: "computer_vision",
-          tech_stack: "PyTorch, OpenCV, Streamlit"
-        },
-        {
-          title: "AI Chatbot Integration",
-          description: "LLM-powered conversational interface",
-          type: "nlp",
-          tech_stack: "OpenAI API, Flask/Streamlit"
-        }
-      ],
-      resources: [
-        { title: "PyTorch Detection Tutorial", url: "https://pytorch.org", type: "tutorial" },
-        { title: "DataCamp – Using GPT via OpenAI API", url: "https://www.datacamp.com", type: "tutorial" }
-      ]
-    },
-    {
-      month: 6,
-      title: "Capstone & Portfolio Polish",
-      description: "Full-stack integration and portfolio enhancement",
-      projects: [
-        {
-          title: "Full-Stack AI Web App",
-          description: "Multi-modal AI assistant with integrated capabilities",
-          type: "integration",
-          tech_stack: "FastAPI/Flask, React, Docker"
-        },
-        {
-          title: "GitHub & Resume Enhancement",
-          description: "Portfolio optimization and job preparation",
-          type: "portfolio",
-          tech_stack: "GitHub Pages, Documentation tools"
-        }
-      ],
-      resources: [
-        { title: "DataCamp – CI/CD for Machine Learning", url: "https://www.datacamp.com", type: "tutorial" },
-        { title: "Analytics Vidhya – Heroku Deployment Guide", url: "https://www.analyticsvidhya.com", type: "tutorial" }
-      ]
-    }
-  ];
-
-  // Insert months and projects
-  roadmapData.forEach((monthData) => {
-    db.run('INSERT OR IGNORE INTO months (month_number, title, description) VALUES (?, ?, ?)',
-      [monthData.month, monthData.title, monthData.description], function(err) {
-        if (err) return;
-        
-        const monthId = this.lastID;
-        
-        // Insert projects for this month
-        monthData.projects.forEach((project) => {
-          const projectId = uuidv4();
-          db.run('INSERT OR IGNORE INTO projects (id, month_id, title, description, type, tech_stack) VALUES (?, ?, ?, ?, ?, ?)',
-            [projectId, monthData.month, project.title, project.description, project.type, project.tech_stack]);
-        });
-
-        // Insert learning resources
-        monthData.resources.forEach((resource) => {
-          const resourceId = uuidv4();
-          db.run('INSERT OR IGNORE INTO learning_resources (id, month_id, title, url, type) VALUES (?, ?, ?, ?, ?)',
-            [resourceId, monthData.month, resource.title, resource.url, resource.type]);
-        });
-      });
-  });
-}
 
 // API Routes
+
+app.post('/api/smart-add', (req, res) => {
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ error: 'Text input is required' });
+    }
+
+    const operations = [];
+    const createdItems = { projects: [], goals: [], tasks: [] };
+
+    const processProjectBlock = (block) => {
+        const project = {
+            id: uuidv4(),
+            title: '',
+            description: '',
+            month_id: null,
+            type: 'uncategorized',
+            tech_stack: '',
+            status: 'not_started',
+            documentation_status: 'not_started',
+            progress_percentage: 0,
+            github_url: '',
+            deployment_url: '',
+            tasks: []
+        };
+        
+        const taskBlocks = block.split(/\n\s*Task:/i);
+        const projectDetailsBlock = taskBlocks.shift().trim();
+        
+        const projectLines = projectDetailsBlock.split('\n');
+        project.title = projectLines.shift().trim();
+
+        projectLines.forEach(line => {
+            const [key, ...v] = line.split(':');
+            const value = v.join(':').trim();
+            const keyLower = key.trim().toLowerCase();
+            
+            if (keyLower === 'description') project.description = value;
+            else if (keyLower === 'month' || keyLower === 'month_id') project.month_id = parseInt(value, 10) || null;
+            else if (keyLower === 'type') project.type = value.toLowerCase().replace(/\s+/g, '_');
+            else if (keyLower === 'tech stack') project.tech_stack = value;
+            else if (keyLower === 'status') project.status = value.toLowerCase().replace(/\s+/g, '_');
+            else if (keyLower === 'github url') project.github_url = value;
+            else if (keyLower === 'deployment url') project.deployment_url = value;
+        });
+
+        taskBlocks.forEach(taskBlock => {
+            const taskLines = taskBlock.trim().split('\n');
+            const task = {
+                id: uuidv4(),
+                project_id: project.id,
+                title: taskLines.shift().trim(),
+                description: '',
+                status: 'todo',
+                priority: 'medium',
+                due_date: null
+            };
+
+            taskLines.forEach(line => {
+                const [key, ...v] = line.split(':');
+                const value = v.join(':').trim();
+                const keyLower = key.trim().toLowerCase();
+
+                if (keyLower === 'description') task.description = value;
+                else if (keyLower === 'priority') task.priority = value.toLowerCase();
+                else if (keyLower === 'due date') task.due_date = value;
+                else if (keyLower === 'status') task.status = value.toLowerCase().replace(/\s+/g, '_');
+            });
+            project.tasks.push(task);
+        });
+
+        operations.push(callback => {
+            db.run(
+                `INSERT INTO projects (id, title, description, month_id, type, tech_stack, status, github_url, deployment_url, documentation_status, progress_percentage)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [project.id, project.title, project.description, project.month_id, project.type, project.tech_stack, project.status, project.github_url, project.deployment_url, project.documentation_status, project.progress_percentage],
+                function (err) {
+                    if (err) return callback(err);
+                    createdItems.projects.push(project);
+                    
+                    const taskOps = project.tasks.map(task => 
+                        (taskCallback) => db.run(
+                            `INSERT INTO tasks (id, project_id, title, description, status, priority, due_date)
+                             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                            [task.id, task.project_id, task.title, task.description, task.status, task.priority, task.due_date],
+                            function(err) {
+                                if (err) return taskCallback(err);
+                                createdItems.tasks.push(task);
+                                taskCallback();
+                            }
+                        )
+                    );
+
+                    let completedTasks = 0;
+                    if (taskOps.length === 0) return callback();
+                    taskOps.forEach(op => op(err => {
+                        if (err) return callback(err);
+                        completedTasks++;
+                        if (completedTasks === taskOps.length) {
+                            callback();
+                        }
+                    }));
+                }
+            );
+        });
+    };
+
+    const processGoalBlock = (block) => {
+        const lines = block.trim().split('\n');
+        const goal = {
+            id: uuidv4(),
+            title: lines.shift().trim(),
+            description: '',
+            type: 'learning',
+            target_value: 1,
+            current_value: 0,
+            target_date: null,
+            status: 'active'
+        };
+
+        lines.forEach(line => {
+            const [key, ...v] = line.split(':');
+            const value = v.join(':').trim();
+            const keyLower = key.trim().toLowerCase();
+
+            if (keyLower === 'description') goal.description = value;
+            else if (keyLower === 'type') goal.type = value.toLowerCase().replace(/\s+/g, '_');
+            else if (keyLower === 'target value') goal.target_value = parseFloat(value) || 1;
+            else if (keyLower === 'target date') goal.target_date = value;
+            else if (keyLower === 'status') goal.status = value.toLowerCase().replace(/\s+/g, '_');
+        });
+
+        operations.push(callback => {
+            db.run(
+                `INSERT INTO goals (id, title, description, type, target_value, current_value, target_date, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [goal.id, goal.title, goal.description, goal.type, goal.target_value, goal.current_value, goal.target_date, goal.status],
+                function (err) {
+                    if (err) return callback(err);
+                    createdItems.goals.push(goal);
+                    callback();
+                }
+            );
+        });
+    };
+
+    const blocks = text.split(/\n\s*(?=Project:|Goal:)/i);
+    blocks.forEach(block => {
+        const trimmedBlock = block.trim();
+        if (trimmedBlock.toLowerCase().startsWith('project:')) {
+            processProjectBlock(trimmedBlock.substring('project:'.length));
+        } else if (trimmedBlock.toLowerCase().startsWith('goal:')) {
+            processGoalBlock(trimmedBlock.substring('goal:'.length));
+        }
+    });
+
+    if (operations.length === 0) {
+        return res.status(200).json({ message: 'No valid items found to add.' });
+    }
+    
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+        let completedOps = 0;
+        operations.forEach(op => {
+            op((err) => {
+                if (err) {
+                    db.run("ROLLBACK");
+                    console.error("Error during smart-add transaction:", err);
+                    return res.status(500).json({ error: 'Failed to add items to database.', details: err.message });
+                }
+                completedOps++;
+                if (completedOps === operations.length) {
+                    db.run("COMMIT", (commitErr) => {
+                         if (commitErr) {
+                            console.error("Error committing transaction:", commitErr);
+                            return res.status(500).json({ error: 'Failed to commit transaction.', details: commitErr.message });
+                         }
+                         res.status(201).json({ 
+                            message: `${createdItems.projects.length} projects, ${createdItems.goals.length} goals, and ${createdItems.tasks.length} tasks added.`, 
+                            createdItems 
+                        });
+                    });
+                }
+            });
+        });
+    });
+});
 
 // Get all months with their projects
 app.get('/api/months', (req, res) => {
@@ -340,6 +360,27 @@ app.get('/api/projects', (req, res) => {
     }
     res.json(rows);
   });
+});
+
+app.get('/api/projects/search', (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.status(400).json({ error: 'Query parameter "q" is required.' });
+  }
+  
+  const searchQuery = `%${q}%`;
+  
+  db.all(
+    'SELECT * FROM projects WHERE title LIKE ? OR description LIKE ? ORDER BY month_id, title',
+    [searchQuery, searchQuery],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(rows);
+    }
+  );
 });
 
 // Create a new project
@@ -585,6 +626,27 @@ app.get('/api/learning-resources', (req, res) => {
     }
     res.json(rows);
   });
+});
+
+app.get('/api/resources/search', (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.status(400).json({ error: 'Query parameter "q" is required.' });
+  }
+
+  const searchQuery = `%${q}%`;
+
+  db.all(
+    'SELECT * FROM learning_resources WHERE title LIKE ? OR notes LIKE ? OR type LIKE ? ORDER BY month_id, title',
+    [searchQuery, searchQuery, searchQuery],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json(rows);
+    }
+  );
 });
 
 app.listen(PORT, () => {
